@@ -1,0 +1,25 @@
+NAME OF PROJECT:
+    CrazyWorld
+DESCRIPTION:
+    A 2d action role-playing game
+Competitive Analysis:
+    I have seen other games in the same genre, such as the Legend of Zelda, Undertale, etc. I
+    wanted to make a game that had the same visual aesthetic but a difference in terms of gameplay mechanics.
+    Like the Legend of Zelda and unlike Undertale, combat would progress in real-time; however,
+    unlike the Legend of Zelda, enemies would be harder to defeat. In some cases, dodging attacks and
+    quick-time events would be the key to avoiding a game over.
+Structural Plan:
+    I will be writing custom modules dedicated to handling player and npc stats, as well as certain attacks
+    a player or npc has. Creating different tiles such as water, cloud, and ice as well as grass could be handled as well.
+
+Algorithmic Plan:
+    I will also write AI algorithms for different npcs. The npcs cannot be unintelligent and easily defeated
+    by the player. Instead the player must react quickly to npc's attacks and either dodge or parry the attack.
+    The enemies must be hard, but not impossible, to defeat. "Alpha testing" the enemies to ensure
+    that they are not over-powered in any way and make sure that they are not too easy to defeat will be key.
+
+Timelime Plan:
+    I will finish most of the more intermediate features on Tuesday, and bring out most of the final work by Thursday.
+
+Version Control Plan:
+    I will be using git version control (via github.com) to backup my project.
