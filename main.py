@@ -57,19 +57,16 @@ class NPC(object):
         canvas.create_oval(self.cx - self.r, self.cy - self.r, self.cx + self.r, self.cy + self.r, fill = "Red")
         canvas.create_text(self.cx, self.cy + 5, text=self.health)
     def chasePlayer(self, other):
-        if other.__class__.__name__ == "Player" and other.health > 0:
-            direction = math.atan((other.cy - self.cy) // (other.cx - self.cx))
-            print(direction)
-            directionX = math.cos(direction)
-            directionY = math.sin(direction)
-            if other.cx < self.cx:
-                self.cx -= directionX * (self.r // 2)
-            else:
-                self.cx += directionX * (self.r // 2)
-            if other.cy < self.cy:
-                self.cy += directionY * (self.r // 2)
-            else:
-                self.cy += directionY * (self.r // 2)
+        if ((other.__class__.__name__ == "Player" and other.health > 0) and
+        (((other.cx - self.cx) ** 2 + (other.cy - self.cy) ** 2) ** 0.5) < 200):
+            if other.cx + other.r < self.cx:
+                self.cx -= 5
+            elif other.cx - other.r > self.cx:
+                self.cx += 5
+            if other.cy + other.r < self.cy:
+                self.cy -= 5
+            elif other.cy - other.r > self.cy:
+                self.cy += 5
 
 class HealingOrb(object):
     def __init__(self, name, gender, level, health, healing, cx, cy, r):
