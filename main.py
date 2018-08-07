@@ -44,6 +44,7 @@ class NPC(object):
         self.cx = cx
         self.cy = cy
         self.r = r
+        self.dead = False
 
     def __repr__(self):
         return "%s, level %d, health %d, attack %d" % (self.name, self.level, self.health, self.attack)
@@ -58,15 +59,15 @@ class NPC(object):
         canvas.create_text(self.cx, self.cy + 5, text=self.health)
     def chasePlayer(self, other):
         if ((other.__class__.__name__ == "Player" and other.health > 0) and
-        (((other.cx - self.cx) ** 2 + (other.cy - self.cy) ** 2) ** 0.5) < 200):
+        (((other.cx - self.cx) ** 2 + (other.cy - self.cy) ** 2) ** 0.5) < 500):
             if other.cx + other.r < self.cx:
-                self.cx -= 5
+                self.cx -= 10
             elif other.cx - other.r > self.cx:
-                self.cx += 5
+                self.cx += 10
             if other.cy + other.r < self.cy:
-                self.cy -= 5
+                self.cy -= 10
             elif other.cy - other.r > self.cy:
-                self.cy += 5
+                self.cy += 10
 
 class HealingOrb(object):
     def __init__(self, name, gender, level, health, healing, cx, cy, r):
@@ -78,6 +79,7 @@ class HealingOrb(object):
         self.cx = cx
         self.cy = cy
         self.r = r
+        self.usedUp = False
 
     def __repr__(self):
         return "%s, level %d, health %d, healing %d" % (self.name, self.level, self.health, self.healing)
@@ -128,20 +130,33 @@ def timerFiredAction(data):
         data.enemyList.append(NPC("Wiseau", "Male", 50, 100, 10, random.randint(0, data.width), random.randint(0, data.height), 50))
     if data.timerCall % 100 == 0:
         data.healingOrbList.append(HealingOrb("Danielle", "Female", 50, 100, 10, random.randint(0, data.width), random.randint(0, data.height), 50))
+    # any enemy should chase the player if she is close to it.
     for enemy in data.enemyList:
         enemy.chasePlayer(data.Emma)
+        # if enemy runs out of health,
+        # it dies and is removed from the list.
         if enemy.health <= 0:
-            data.enemyList.remove(enemy)
+            enemy.dead = True
+        # the player will be damaged if she is too close to an enemy.
         if data.Emma.isCollision(enemy):
             data.Emma.health -= 1
+            # the player dies if she runs out of health,
+            # resulting in a game over.
             if data.Emma.health <= 0:
                 data.gameOver = True
+    # list comprehension for removing dead enemies
+    data.enemyList = [enemy for enemy in data.enemyList if enemy.dead == False]
+    # Healing orbs appear half as frequently as enemies.
+    # They can heal the player but also run out of
+    # fuel if used too long, and disappear.
     for orb in data.healingOrbList:
         if orb.health <= 0:
-            data.healingOrbList.remove(orb)
+            orb.usedUp = True
         if data.Emma.isCollision(orb):
             data.Emma.health += 1
             orb.health -= 1
+    # remove used-up orbs
+    data.healingOrbList = [orb for orb in data.healingOrbList if orb.usedUp == False]
 
 def timerFired(data):
     if data.gameOver == False:
