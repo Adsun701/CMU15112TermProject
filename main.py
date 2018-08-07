@@ -13,6 +13,7 @@ class Player(object):
         self.gender = gender
         self.level = level
         self.health = health
+        self.maxHealth = health
         self.attack = attack
         self.cx = cx
         self.cy = cy
@@ -58,8 +59,7 @@ class NPC(object):
         canvas.create_oval(self.cx - self.r, self.cy - self.r, self.cx + self.r, self.cy + self.r, fill = "Red")
         canvas.create_text(self.cx, self.cy + 5, text=self.health)
     def chasePlayer(self, other):
-        if ((other.__class__.__name__ == "Player" and other.health > 0) and
-        (((other.cx - self.cx) ** 2 + (other.cy - self.cy) ** 2) ** 0.5) < 500):
+        if (other.__class__.__name__ == "Player" and other.health > 0):
             if other.cx + other.r < self.cx:
                 self.cx -= 10
             elif other.cx - other.r > self.cx:
@@ -110,15 +110,23 @@ def mousePressed(event, data):
         mousePressedAction(event, data)
 
 def keyPressedAction(event, data):
-    # use event.char and event.keysym
+    # Move, wrap around when out of bounds
     if event.keysym == "Left":
         data.Emma.cx -= 10
+        if data.Emma.cx < 0:
+            data.Emma.cx = data.width - data.Emma.r * 2
     elif event.keysym == "Right":
         data.Emma.cx += 10
-    elif event.keysym == "Up":
-        data.Emma.cy -= 10
+        if data.Emma.cx > data.width:
+            data.Emma.cx = data.Emma.r * 2
     elif event.keysym == "Down":
         data.Emma.cy += 10
+        if data.Emma.cy > data.height:
+            data.Emma.cy = data.Emma.r * 2
+    elif event.keysym == "Up":
+        data.Emma.cy -= 10
+        if data.Emma.cy < 0:
+            data.Emma.cy = data.height - data.Emma.r * 2
 
 def keyPressed(event, data):
     if data.gameOver == False:
@@ -128,7 +136,8 @@ def timerFiredAction(data):
     data.timerCall += 1
     if data.timerCall % 50 == 0:
         data.enemyList.append(NPC("Wiseau", "Male", 50, 100, 10, random.randint(0, data.width), random.randint(0, data.height), 50))
-    if data.timerCall % 100 == 0:
+    # only one healing orb at any time
+    if data.timerCall % 500 == 0 and data.healingOrbList == list():
         data.healingOrbList.append(HealingOrb("Danielle", "Female", 50, 100, 10, random.randint(0, data.width), random.randint(0, data.height), 50))
     # any enemy should chase the player if she is close to it.
     for enemy in data.enemyList:
@@ -153,12 +162,14 @@ def timerFiredAction(data):
         if orb.health <= 0:
             orb.usedUp = True
         if data.Emma.isCollision(orb):
-            data.Emma.health += 1
-            orb.health -= 1
+            if data.Emma.health < 50:
+                data.Emma.health += 1
+                orb.health -= 1
     # remove used-up orbs
     data.healingOrbList = [orb for orb in data.healingOrbList if orb.usedUp == False]
 
 def timerFired(data):
+    # keep going until player dies
     if data.gameOver == False:
         timerFiredAction(data)
         
