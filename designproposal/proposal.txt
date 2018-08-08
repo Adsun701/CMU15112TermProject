@@ -23,3 +23,8 @@ Timelime Plan:
 
 Version Control Plan:
     I will be using git version control (via github.com) to backup my project.
+
+# TP2 Update
+    I actually realized that my work was becoming more of an endless
+    game, so I decided to change the gameplay into more of an endless
+    survival for simplicity.
