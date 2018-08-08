@@ -36,7 +36,7 @@ class Player(object):
             return True
 
 class NPC(object):
-    def __init__(self, name, gender, level, health, attack, cx, cy, r):
+    def __init__(self, name, gender, level, health, attack, cx, cy, r, color = "Red"):
         self.name = name
         self.gender = gender
         self.level = level
@@ -47,6 +47,7 @@ class NPC(object):
         self.cy = cy
         self.r = r
         self.dead = False
+        self.color = color
 
     def __repr__(self):
         return "%s, level %d, health %d, attack %d" % (self.name, self.level, self.health, self.attack)
@@ -57,7 +58,7 @@ class NPC(object):
     def __eq__(self, other):
         return isinstance(other, self.__class__.__name__) and self.getHashables() == other.getHashables()
     def draw(self, canvas):
-        canvas.create_oval(self.cx - self.r, self.cy - self.r, self.cx + self.r, self.cy + self.r, fill = "Red")
+        canvas.create_oval(self.cx - self.r, self.cy - self.r, self.cx + self.r, self.cy + self.r, fill = self.color)
         canvas.create_text(self.cx, self.cy + 5, text=self.health)
     def chasePlayer(self, other):
         if (other.__class__.__name__ == "Player" and other.health > 0):
@@ -69,6 +70,11 @@ class NPC(object):
                 self.cy -= 1
             elif other.cy - other.r > self.cy:
                 self.cy += 1
+    def isCollision(self, other):
+        if ((other.cx - other.r <= self.cx <= other.cx + other.r) and
+            (other.cy - other.r <= self.cy <= other.cy + other.r)):
+            return True
+        
 
 class AttackOrb(object):
     def __init__(self, cx, cy, r):
@@ -132,7 +138,7 @@ def init(data):
     data.attackOrbList = []
     data.timerCall = 0
     data.gameOver = False
-    data.score = 0
+    data.score = 100000
 
 def mousePressedAction(event, data):
     # use event.x and event.y
@@ -161,7 +167,8 @@ def keyPressedAction(event, data):
         data.Emma.cy -= 5
         if data.Emma.cy < 0:
             data.Emma.cy = data.height - data.Emma.r * 2
-    elif event.keysym == "space" and data.enemyList != list() and len(data.attackOrbList) < 5:
+    # fire only when there are enemies and that there are less than 10 attack orbs at the time.
+    elif event.keysym == "space" and data.enemyList != list() and len(data.attackOrbList) < 10:
         data.attackOrbList.append(AttackOrb(data.Emma.cx, data.Emma.cy, 5))
         
 
@@ -172,8 +179,12 @@ def keyPressed(event, data):
 def timerFiredAction(data):
     data.timerCall += 1
     if data.timerCall % 500 == 0:
-        data.enemyList.append(NPC("Wiseau", "Male", 5, random.randint(20, 500), 10, random.randint(0, data.width), random.randint(0, data.height), 50))
-        data.score += 50
+        if data.score >= 10000:
+            data.enemyList.append(NPC("Chris-R", "Male", 5, random.randint(200, 1000), 10, random.randint(0, data.width), random.randint(0, data.height), 50, "Gray"))
+            data.score += 250
+        else:
+            data.enemyList.append(NPC("Wiseau", "Male", 5, random.randint(20, 500), 10, random.randint(0, data.width), random.randint(0, data.height), 50))
+            data.score += 50
     # only one healing orb at any time
     if data.timerCall % 5000 == 0 and data.healingOrbList == list():
         data.healingOrbList.append(HealingOrb("Danielle", "Female", 50, 100, 10, random.randint(0, data.width), random.randint(0, data.height), 50))
@@ -228,6 +239,18 @@ def timerFiredAction(data):
                 minEnemyDistance = enemyDistance
                 closestEnemyIndex = enemyIndex
         attackOrb.homeIn(data.enemyList[closestEnemyIndex])
+    
+    ### More difficulty: Gray enemies!
+    for enemyIndex in range(len(data.enemyList)):
+        for otherEnemyIndex in range(len(data.enemyList)):
+            if enemyIndex == otherEnemyIndex:
+                continue
+            elif data.enemyList[enemyIndex].isCollision(data.enemyList[otherEnemyIndex]):
+                if data.timerCall % 5 == 0:
+                    data.enemyList[enemyIndex].r += 1
+                if data.timerCall % 500 == 0:
+                    # INCREASING HEALTH!
+                    data.enemyList[enemyIndex].health += 20
         
 
 def timerFired(data):
