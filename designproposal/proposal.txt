@@ -28,3 +28,10 @@ Version Control Plan:
     I actually realized that my work was becoming more of an endless
     game, so I decided to change the gameplay into more of an endless
     survival for simplicity.
+
+# TP3 Update
+    The game is now an endless survival game, where the player survives
+    an enemy apocalypse by firing homing projectiles. Player appearance
+    is random, spinach appears randomly to heal players, and after
+    certain score checkpoints, enemies become smarter and become more
+    difficult to defeat, in addition to firing their own projectiles.
