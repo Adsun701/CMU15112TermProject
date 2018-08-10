@@ -9,23 +9,21 @@ import random, copy, math, sys
 ####################################
 
 class Player(object):
-    def __init__(self, name, gender, level, health, attack, cx, cy, r):
+    def __init__(self, name, health, attack, cx, cy, r):
         self.name = name
-        self.gender = gender
-        self.level = level
         self.health = health
         self.maxHealth = health
         self.attack = attack
         self.cx = cx
         self.cy = cy
         self.r = r
-        self.appearance = PhotoImage(file=str(random.randint(0, 2)) + ".gif")
+        self.appearance = PhotoImage(file=str(random.randint(0, 3)) + ".gif")
         self.healthColor="Green"
 
     def __repr__(self):
-        return "%s, level %d, health %d, attack %d" % (self.name, self.level, self.health, self.attack)
+        return "%s, health %d, attack %d" % (self.name, self.health, self.attack)
     def getHashables(self):
-        return (self.name, self.gender, self.level, self.health, self.attack)
+        return (self.name, self.health, self.attack)
     def __hash__(self):
         hash(self.getHashables())
     def __eq__(self, other):
@@ -39,10 +37,7 @@ class Player(object):
             return True
 
 class NPC(object):
-    def __init__(self, name, gender, level, health, attack, cx, cy, r, color = "Red"):
-        self.name = name
-        self.gender = gender
-        self.level = level
+    def __init__(self, health, attack, cx, cy, r, color = "Red"):
         self.health = health
         self.maxHealth = health
         self.attack = attack
@@ -55,9 +50,9 @@ class NPC(object):
         self.appearance = PhotoImage(file="wiseau.gif")
 
     def __repr__(self):
-        return "%s, level %d, health %d, attack %d" % (self.name, self.level, self.health, self.attack)
+        return "enemy, with health %d, attack %d" % (self.health, self.attack)
     def getHashables(self):
-        return (self.name, self.gender, self.level, self.health, self.attack)
+        return (self.health, self.attack)
     def __hash__(self):
         hash(self.getHashables())
     def __eq__(self, other):
@@ -80,7 +75,7 @@ class NPC(object):
             (other.cy - other.r <= self.cy <= other.cy + other.r)):
             return True
 
-class EnemyAttackOrb(object):
+class enemyOrb(object):
     def __init__(self, cx, cy, r):
         self.cx = cx
         self.cy = cy
@@ -104,7 +99,10 @@ class EnemyAttackOrb(object):
         if ((other.cx - other.r <= self.cx <= other.cx + other.r) and
             (other.cy - other.r <= self.cy <= other.cy + other.r)):
             return True
-        
+
+def randomColors():
+    # returns a list of colors
+    return ["Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Purple", "Indigo"]
 
 class AttackOrb(object):
     def __init__(self, cx, cy, r):
@@ -112,6 +110,7 @@ class AttackOrb(object):
         self.cy = cy
         self.r = r
         self.usedUp = False
+        self.color = randomColors()[random.randint(0, len(randomColors()) - 1)]
 
     def __repr__(self):
         return "an attack orb"
@@ -122,7 +121,7 @@ class AttackOrb(object):
     def __eq__(self, other):
         return isinstance(other, self.__class__.__name__) and self.getHashables() == other.getHashables()
     def draw(self, canvas):
-        canvas.create_oval(self.cx - self.r, self.cy - self.r, self.cx + self.r, self.cy + self.r, fill = "White")
+        canvas.create_oval(self.cx - self.r, self.cy - self.r, self.cx + self.r, self.cy + self.r, fill = self.color)
     def isCollision(self, other):
         if ((other.cx - other.r <= self.cx <= other.cx + other.r) and
             (other.cy - other.r <= self.cy <= other.cy + other.r)):
@@ -137,13 +136,9 @@ class AttackOrb(object):
         elif other.cy - other.r > self.cy:
             self.cy += 20
 
-class HealingOrb(object):
-    def __init__(self, name, gender, level, health, healing, cx, cy, r):
-        self.name = name
-        self.gender = gender
-        self.level = level
+class Spinach(object):
+    def __init__(self, health, cx, cy, r):
         self.health = health
-        self.healing = healing
         self.cx = cx
         self.cy = cy
         self.r = r
@@ -151,9 +146,9 @@ class HealingOrb(object):
         self.appearance = PhotoImage(file="spinach" + ".gif")
 
     def __repr__(self):
-        return "%s, level %d, health %d, healing %d" % (self.name, self.level, self.health, self.healing)
+        return "spinach with health %d" % (self.health)
     def getHashables(self):
-        return (self.name, self.gender, self.level, self.health, self.healing)
+        return (self.health)
     def __hash__(self):
         hash(self.getHashables())
     def __eq__(self, other):
@@ -163,19 +158,17 @@ class HealingOrb(object):
         canvas.create_text(self.cx, self.cy + 5, text=self.health)
 
 def init(data):
-    data.Emilia = Player("Emilia", "Female", 1, 50, 2, data.width // 2, data.height // 2, 50)
+    data.Emilia = Player("Emilia", 50, 2, data.width // 2, data.height // 2, 50)
     data.enemyList = []
-    data.enemyAttackOrbList = []
-    data.healingOrbList = []
+    data.enemyOrbList = []
+    data.SpinachList = []
     data.attackOrbList = []
     data.timerCall = 0
     data.gameOver = False
     data.score = 0
 
 def mousePressedAction(event, data):
-    # use event.x and event.y
-    for enemy in data.enemyList:
-        enemy.health -= data.Emilia.attack
+    pass
 
 def mousePressed(event, data):
     if data.gameOver == False:
@@ -209,34 +202,43 @@ def keyPressed(event, data):
         keyPressedAction(event, data)
 
 def ShooterEnemies(data):
+    # enemies start firing their own projectiles
     for enemy in data.enemyList:
         x = random.randint(0, 100)
         if x % 20 == 0:
-            data.enemyAttackOrbList.append(EnemyAttackOrb(enemy.cx, enemy.cy, 5))
+            data.enemyOrbList.append(enemyOrb(enemy.cx, enemy.cy, 5))
 
-def moveEnemyAttackOrbs(enemyAttackOrb):
-    # move enemyAttackOrbs based on random direction
-    enemyAttackOrb.cx += enemyAttackOrb.direction[0] * 5
-    enemyAttackOrb.cy += enemyAttackOrb.direction[1] * 5
+def upgradedShooterEnemies(data):
+    for enemy in data.enemyList:
+        x = random.randint(0, 100)
+        if x % 7 == 0:
+            data.enemyOrbList.append(enemyOrb(enemy.cx, enemy.cy, 5))
 
-def outOfBoundsEnemyAttackOrb(data, enemyAttackOrb):
-    if enemyAttackOrb.cx < 0 or enemyAttackOrb.cx > data.width:
-        enemyAttackOrb.usedUp = True
-    if enemyAttackOrb.cy < 0 or enemyAttackOrb.cy > data.height:
-        enemyAttackOrb.usedUp = True
+def moveEnemyOrbs(enemyOrb):
+    # move enemyOrbs based on random direction
+    enemyOrb.cx += enemyOrb.direction[0] * 5
+    enemyOrb.cy += enemyOrb.direction[1] * 5
+
+def outOfBoundsEnemyOrb(data, enemyOrb):
+    if enemyOrb.cx < 0 or enemyOrb.cx > data.width:
+        enemyOrb.usedUp = True
+    if enemyOrb.cy < 0 or enemyOrb.cy > data.height:
+        enemyOrb.usedUp = True
 
 def timerFiredAction(data):
-    data.timerCall += 1
-    if data.timerCall % 500 == 0:
-        if data.score >= 1500:
-            data.enemyList.append(NPC("Chris-R", "Male", 5, random.randint(200, 1000), 10, random.randint(0, data.width), random.randint(0, data.height), 50))
+    if data.timerCall % 1000 == 0:
+        if 4000 > data.score >= 1500:
+            data.enemyList.append(NPC(random.randint(200, 1000), 2, random.randint(0, data.width), random.randint(0, data.height), 50))
             data.score += 250
+        elif data.score >= 4000:
+            data.enemyList.append(NPC(random.randint(400, 2000), 5, random.randint(0, data.width), random.randint(0, data.height), 50))
+            data.score += 500
         else:
-            data.enemyList.append(NPC("Wiseau", "Male", 5, random.randint(20, 500), 10, random.randint(0, data.width), random.randint(0, data.height), 50))
+            data.enemyList.append(NPC(random.randint(20, 500), 1, random.randint(0, data.width), random.randint(0, data.height), 50))
             data.score += 50
-    # only one healing orb at any time
-    if data.timerCall % 5000 == 0 and data.healingOrbList == list():
-        data.healingOrbList.append(HealingOrb("Danielle", "Female", 50, 100, 10, random.randint(0, data.width), random.randint(0, data.height), 50))
+    # only one spinach at any time
+    if data.timerCall % 1500 == 0 and data.SpinachList == list() and data.timerCall != 0:
+        data.SpinachList.append(Spinach(random.randint(20, 100), random.randint(0, data.width), random.randint(0, data.height), 50))
     # any enemy should chase the player if she is close to it.
     for enemy in data.enemyList:
         enemy.chasePlayer(data.Emilia)
@@ -247,26 +249,26 @@ def timerFiredAction(data):
             data.score += enemy.maxHealth
         # the player will be damaged if she is too close to an enemy.
         if data.Emilia.isCollision(enemy):
-            if data.timerCall % 5 == 0: data.Emilia.health -= 1
+            if data.timerCall % 5 == 0: data.Emilia.health -= enemy.attack
             # the player dies if she runs out of health,
             # resulting in a game over.
             if data.Emilia.health <= 0:
                 data.gameOver = True
     # list comprehension for removing dead enemies
     data.enemyList = [enemy for enemy in data.enemyList if enemy.dead == False]
-    # Healing orbs appear half as frequently as enemies.
-    # They can heal the player but also run out of
+    # spinach appears rarely.
+    # It can heal the player but also run out of
     # fuel if used too long, and disappear.
-    for orb in data.healingOrbList:
-        if orb.health <= 0:
-            orb.usedUp = True
-        if data.Emilia.isCollision(orb):
+    for spinach in data.SpinachList:
+        if spinach.health <= 0:
+            spinach.usedUp = True
+        if data.Emilia.isCollision(spinach):
             if data.Emilia.health < data.Emilia.maxHealth:
                 if data.timerCall % 5 == 0:
                     data.Emilia.health += 1
-                    orb.health -= 1
-    # remove used-up orbs
-    data.healingOrbList = [orb for orb in data.healingOrbList if orb.usedUp == False]
+                    spinach.health -= 1
+    # remove used-up spinach
+    data.SpinachList = [spinach for spinach in data.SpinachList if spinach.usedUp == False]
     # attack orbs, generated by the player, home in on nearest enemy
     for attackOrb in data.attackOrbList:
         for enemy in data.enemyList:
@@ -280,7 +282,7 @@ def timerFiredAction(data):
         data.attackOrbList = list()
     
     # list comprehension for removing used-up enemy attack orbs
-    data.enemyAttackOrbList = [enemyAttackOrb for enemyAttackOrb in data.enemyAttackOrbList if enemyAttackOrb.usedUp == False]
+    data.enemyOrbList = [enemyOrb for enemyOrb in data.enemyOrbList if enemyOrb.usedUp == False]
     
     # get indices of enemy list. attack nearest enemy from indices.
     for attackOrb in data.attackOrbList:
@@ -294,16 +296,19 @@ def timerFiredAction(data):
         attackOrb.homeIn(data.enemyList[closestEnemyIndex])
     
     ### More difficulty: Enemies shoot projectiles in four cardinal directions!
-    if data.score >= 1500:
+    if 4000 > data.score >= 1500:
         ShooterEnemies(data)
-    for enemyAttackOrb in data.enemyAttackOrbList:
+    elif data.score >= 4000:
+        upgradedShooterEnemies(data)
+    for enemyOrb in data.enemyOrbList:
         # move orbs
-        moveEnemyAttackOrbs(enemyAttackOrb)
-        if enemyAttackOrb.isCollision(data.Emilia):
+        moveEnemyOrbs(enemyOrb)
+        outOfBoundsEnemyOrb(data, enemyOrb)
+        if enemyOrb.isCollision(data.Emilia):
             # damage the player
             data.Emilia.health -= 1
             # orb is now used up
-            enemyAttackOrb.usedUp = True
+            enemyOrb.usedUp = True
     
     # health text is different color depending on health percentage
     if data.Emilia.maxHealth // 4 < data.Emilia.health <= data.Emilia.maxHealth // 2:
@@ -312,6 +317,7 @@ def timerFiredAction(data):
         data.Emilia.healthColor = "Red"
     else:
         data.Emilia.healthColor = "Green"
+    data.timerCall += 1
 
 def timerFired(data):
     # keep going until player dies
@@ -332,11 +338,11 @@ def redrawAll(canvas, data):
         gameOverScreen(canvas, data)
     for enemy in data.enemyList:
         enemy.draw(canvas)
-    for orb in data.healingOrbList:
-        orb.draw(canvas)
+    for spinach in data.SpinachList:
+        spinach.draw(canvas)
     for attackOrb in data.attackOrbList:
         attackOrb.draw(canvas)
-    for enemyOrb in data.enemyAttackOrbList:
+    for enemyOrb in data.enemyOrbList:
         enemyOrb.draw(canvas)
     canvas.create_text(300, 300, text=data.score, fill="Magenta", font="Helvetica 56 bold")
 
