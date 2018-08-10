@@ -1,4 +1,5 @@
-# Basic Animation Framework
+# CrazyWorld, an endless game where you survive an enemy apocalypse.
+# images used in this game are from google images.
 
 from tkinter import *
 
@@ -51,7 +52,7 @@ class Player(object):
             return True
 
 class NPC(object):
-    def __init__(self, health, attack, cx, cy, r, color):
+    def __init__(self, health, attack, cx, cy, r):
         # health and max health
         self.health = health
         self.maxHealth = health
